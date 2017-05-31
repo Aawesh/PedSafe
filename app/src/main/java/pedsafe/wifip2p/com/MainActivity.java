@@ -24,8 +24,8 @@ public class MainActivity extends AppCompatActivity {
 
     public TextView mTextView;
     public ListView mListView;
-    public InetAddress inetAddress;
-    public Boolean isHost;
+//    public InetAddress inetAddress;
+//    public boolean isHost = false;
 
     private Button searchButton, transferButton, disconnectButton;
     private WifiP2pManager mManager;
@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
         transferButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                transfer(v);
+                //transfer(v); //TODO
+                Toast.makeText(getApplicationContext(),"Transfer clicked",Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -108,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void transfer(View v){
-
-        if(inetAddress != null && isHost != null){
+    public void transfer(InetAddress inetAddress, boolean isHost){
+        Log.d(TAG, String.valueOf(inetAddress != null));
+        if(inetAddress != null){
             Toast.makeText(getApplicationContext(),"Transfer will start soon ...",Toast.LENGTH_SHORT).show();
 
             dataDisplay = new Intent(this,DataDisplayActivity.class);
@@ -150,5 +151,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mReciever.disconnect();
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 }

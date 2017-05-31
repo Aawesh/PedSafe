@@ -30,6 +30,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
     private List<WifiP2pDevice> mPeerList;
     private List<WifiP2pConfig> mConfigList;
     private WifiP2pDevice mDevice;
+    private boolean isGrouoFormed = false;
 
     private final static String TAG = "WiFiDirectBroadcastReceiver";
 
@@ -130,30 +131,36 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             InetAddress groupOwnerAddress = info.groupOwnerAddress;
 
             if(info.groupFormed){
+                isGrouoFormed = true;
                 if(info.isGroupOwner){
                     mActivity.mTextView.setText("HOST" ); // TODO make the activity do this setText task, just send the messave and view info from here
-                    mActivity.inetAddress = groupOwnerAddress;
-                    mActivity.isHost = true;
+//                    mActivity.inetAddress = groupOwnerAddress;
+//                    mActivity.isHost = true;
+                    mActivity.transfer(groupOwnerAddress,true);
                 }else{
                     mActivity.mTextView.setText("CLIENT"); // TODO make the activity do this setText task, just send the messave and view info from here
-                    mActivity.inetAddress = groupOwnerAddress;
-                    mActivity.isHost = true;
+//                    mActivity.inetAddress = groupOwnerAddress;
+//                    mActivity.isHost = false;
+                    mActivity.transfer(groupOwnerAddress,false);
+
                 }
             }
         }
     };
 
     public void disconnect(){
-        mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Log.d(TAG,"Removed group");
-            }
+        if(isGrouoFormed){
+            mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG,"Removed group");
+                }
 
-            @Override
-            public void onFailure(int reason) {
-                Log.d(TAG,"Remove group failed: Error: "+reason);;
-            }
-        });
+                @Override
+                public void onFailure(int reason) {
+                    Log.d(TAG,"Remove group failed: Error: "+reason);
+                }
+            });
+        }
     }
 }
