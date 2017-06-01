@@ -1,115 +1,97 @@
 package pedsafe.wifip2p.com;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketException;
 
 /**
  * Created by aawesh on 5/30/17.
  */
 
-public class ClientThread implements Runnable{
+public class ClientThread extends AsyncTask{
 
     String TAG  = "ClientThread";
+    private DataDisplayActivity dataDisplayActivity;
 
-    String device1String = "CLIENT";
-    String device2String = "";
-
+    String result = "";
+    String message = "Greetings from client";
     InetAddress hostAddress;
-    int port = 0;
-
-    DatagramSocket socket;
-
-    byte[] sendData = new byte[64];
-    byte[] receiveData = new byte[64];
-
-    int sendcount = 1;
-    int receiveCount = 0;
-
+    int port;
+    int len;
 
     //datatransfer activity passes the address of the group host and the port for the use in the thread
-    public ClientThread(InetAddress hostAddress, int port){
+    public ClientThread(InetAddress hostAddress, int port,DataDisplayActivity dataDisplayAcrivity){
         this.hostAddress = hostAddress;
         this.port = port;
+        this.dataDisplayActivity = dataDisplayAcrivity;
     }
-
-    //called when theread is kicked off by datatransferdisplay activity
 
     @Override
-    public void run(){
+    protected Object doInBackground(Object[] params) {
+        Socket socket = new Socket();
+        try {
+            /**
+             * Create a client socket with the host,
+             * port, and timeout information.
+             */
+            byte buf[]  = new byte[1024];
+            socket.bind(null);
+            socket.connect((new InetSocketAddress(hostAddress, port)), 500);
 
-        if(hostAddress != null && port !=0){
-            //send packet non stop
-            while(true){
-                //this creates a new socket using the given port number and it runs on the first iteration
-                try{
-                    if(socket == null){
-                        socket = new DatagramSocket(port);
-                        socket.setSoTimeout(1); //1 millisecond
+            /**
+             * Create a byte stream from a JPEG file and pipe it to the output stream
+             * of the socket. This data will be retrieved by the server device.
+             */
+            OutputStream outputStream = socket.getOutputStream();
+            InputStream inputStream = new ByteArrayInputStream(message.getBytes());
+            while ((len = inputStream.read(buf)) != -1) {
+                outputStream.write(buf, 0, len);
+            }
+            outputStream.close();
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            //catch logic
+        } catch (IOException e) {
+            //catch logic
+        }
+
+        /**
+         * Clean up any open sockets when done
+         * transferring or if an exception occurred.
+         */
+        finally {
+            if (socket != null) {
+                if (socket.isConnected()) {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        //catch logic
                     }
-                } catch (SocketException e) {
-                    handleException(e.getMessage());
                 }
-
-                //Ready to send
-                //send a packet containing the message "CLIENT"
-                try{
-                    sendData  = (device1String + sendcount).getBytes();
-                    sendcount++;
-
-                    DatagramPacket packet = new DatagramPacket(sendData,sendData.length,hostAddress,port);
-                    socket.send(packet);
-                    Log.d(TAG,"Client: packet sent");
-                } catch (IOException e) {
-                    System.out.println("Second try clientthread= " );
-
-                    handleException(e.getMessage());
-                }//end send
-
-
-
-                //receive packets
-                try{
-                    //create a packet to send the incoming packet
-                    DatagramPacket receivePacket = new DatagramPacket(receiveData,receiveData.length);
-                    socket.receive(receivePacket);
-                    receivePacket.getData();//extract the data from the packet
-
-                    //convert the packet back to string
-                    device2String = new String(receivePacket.getData(),0,receivePacket.getLength());
-                    receiveCount++;
-                } catch (IOException e) {
-                    System.out.println("Third try clientthread= " );
-                    handleException(e.getMessage());
-                    continue;
-                } //end receive
-
             }
         }
+        return result;
     }
 
-    public void handleException(String message){
-        if(message == null){
-            Log.d(TAG, "Unknown Message");
-        }else{
-            Log.d(TAG, message);
+    @Override
+    protected void onPostExecute(Object o) {
+        super.onPostExecute(o);
+        Log.d(TAG,"o === " + o);
+        if(o != null){
+            dataDisplayActivity.d1textView.setText("For now Clent sends only");
+            dataDisplayActivity.d2textView.setText("Sent: "+message);
+            Log.d(TAG,"Client sent this:"+message);
         }
-
     }
-
-
-    //used by datatransferdisplay
-    public String getDevice1String(){
-        return (device1String + receiveCount);
-    }
-
-    public String getDevice2String(){
-        return device2String;
-    }
-
-
 }

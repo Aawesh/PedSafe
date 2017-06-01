@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import java.net.InetAddress;
@@ -16,7 +17,7 @@ import java.util.TimerTask;
  * Created by aawesh on 5/30/17.
  */
 
-public class DataDisplayActivity extends Activity {
+public class DataDisplayActivity extends AppCompatActivity {
 
     public TextView d1textView, d2textView;
     public ClientThread clientThread;
@@ -55,20 +56,19 @@ public class DataDisplayActivity extends Activity {
 
             //Determine if the user is the host or the client
             isHost = intent.getBooleanExtra("IsHost",false);
-            System.out.println("isHost = " + isHost);
 
             if(isHost){
-                serverThread = new ServerThread(port);
-                new Thread (serverThread).start();
+                serverThread = new ServerThread(port,this);
+                serverThread.execute();
             }else{
-                clientThread = new ClientThread(hostAddress,port);
-                new Thread (clientThread).start();
+                clientThread = new ClientThread(hostAddress,port,this);
+                clientThread.execute();
             }
 
         }
 
     }
-
+/*
     @Override
     protected void onResume() {
         super.onResume();
@@ -81,7 +81,7 @@ public class DataDisplayActivity extends Activity {
                         @Override
                         public void run() {
                             System.out.println("serverThread inside runonui= " + serverThread);
-                            d1textView.setText("Device 1: " + serverThread.getDevice1String());
+                            d1textView.setText("I am a server");
                             d2textView.setText("Device 2: " + serverThread.getDevice2String());
                         }
                     });
@@ -101,6 +101,7 @@ public class DataDisplayActivity extends Activity {
         };
         timer.schedule(timerTask,10,10);
     }
+    */
 
     @Override
     protected void onDestroy() {
